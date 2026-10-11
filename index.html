@@ -371,12 +371,12 @@ details summary{cursor:pointer}
     setState('thinking'); chest('계산 중', 24); startBeeps();
 
     const ms = +$('think').value * 1000, bar = $('chestBar'), t0 = performance.now();
-    await new Promise(res => {
-      (function step(now){
-        const k = Math.min(1, (now - t0) / ms); bar.setAttribute('width', 108 * k);
-        if(k < 1) requestAnimationFrame(step); else res();
-      })(t0);
-    });
+    // 고민 시간은 타이머로 재고(화면이 가려져도 멈추지 않음), 게이지만 주기적으로 그림
+    const gauge = setInterval(() => {
+      bar.setAttribute('width', 108 * Math.min(1, (performance.now() - t0) / ms));
+    }, 50);
+    await sleep(ms);
+    clearInterval(gauge);
 
     stopBeeps(); ding(); bar.setAttribute('width', 0);
     showProblem(a, b, ans); chest(String(ans), 40);
