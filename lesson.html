@@ -81,7 +81,15 @@ a.btn.b{color:#fff}
 .vs .vstext{font-size:70px;font-weight:900}
 .question{flex:1;padding:32px 34px;display:flex;flex-direction:column;gap:20px;justify-content:center}
 .answer-box{background:var(--green-soft);border:3px dashed var(--green);border-radius:16px;padding:16px 20px;font-size:28px;font-weight:700;color:#11683a}
-/* 2 */
+/* 2 : 구구단송 영상 */
+.song.v{display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1;min-height:0;align-items:center}
+.vid{padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.vhead{font-size:24px;font-weight:900;display:flex;gap:10px;align-items:center}
+.vframe{aspect-ratio:16/9;width:100%;background:#1b1714;border:3px solid var(--ink);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.vframe iframe{width:100%;height:100%;border:0;display:block}
+.song.v.one{grid-template-columns:1fr;justify-items:center}
+.song.v.one .vid{width:min(100%,800px)}
+.song.v.one-7 #vid8,.song.v.one-8 #vid7{display:none}
 .song{display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:1;min-height:0}
 .dan{padding:14px 20px;display:flex;flex-direction:column;gap:1px}
 .dan h2{margin:0 0 6px;font-size:30px;font-weight:900;display:flex;align-items:center;justify-content:space-between}
@@ -211,9 +219,9 @@ a.btn.b{color:#fff}
   <section class="slide f-yellow" data-title="곱셈구구 노래"><div class="paper">
     <span class="tag">함께 불러요</span>
     <h1>🎵 어려웠던 <span class="mk c">7단</span> <span class="mk b">8단</span> 노래 불러요</h1>
-    <div class="song">
-      <div class="box c dan" id="dan7"><h2>7단 <button class="btn" type="button" data-sing="7">▶ 따라 부르기</button></h2></div>
-      <div class="box b dan" id="dan8"><h2>8단 <button class="btn" type="button" data-sing="8">▶ 따라 부르기</button></h2></div>
+    <div class="song v" id="songs">
+      <div class="box c vid" id="vid7"><div class="vhead"><span class="mk c">7단</span> 주니토니 구구단송</div><div class="vframe" id="vf7"></div></div>
+      <div class="box b vid" id="vid8"><div class="vhead"><span class="mk b">8단</span> 주니토니 구구단송</div><div class="vframe" id="vf8"></div></div>
     </div>
   </div></section>
 
@@ -446,6 +454,7 @@ a.btn.b{color:#fff}
     $('nowNum').textContent = 'SCENE ' + String(cur + 1).padStart(2, '0');
     $('nowTitle').textContent = slides[cur].dataset.title;
     layout(); updateHint();
+    if(cur !== 1 && typeof pauseVids === 'function') pauseVids();
     try{ history.replaceState(null, '', '#s' + (cur + 1)); }catch(_){}
   }
   function toggleOverview(){
@@ -485,33 +494,6 @@ a.btn.b{color:#fff}
   const reveal = id => $(id).classList.add('shown');
   document.querySelectorAll('[data-reveal]').forEach(b => b.onclick = () => $(b.dataset.reveal).classList.toggle('shown'));
   $('cho').onclick = () => $('cho').classList.toggle('open');
-
-  // ---------- 노래: 7단, 8단 ----------
-  const SAY = {
-    7: ['칠 일은 칠','칠 이 십사','칠 삼 이십일','칠 사 이십팔','칠 오 삼십오','칠 육 사십이','칠 칠 사십구','칠 팔 오십육','칠 구 육십삼'],
-    8: ['팔 일은 팔','팔 이 십육','팔 삼 이십사','팔 사 삼십이','팔 오 사십','팔 육 사십팔','팔 칠 오십육','팔 팔 육십사','팔 구 칠십이']
-  };
-  [7, 8].forEach(d => {
-    const box = $('dan' + d);
-    SAY[d].forEach((s, i) => {
-      const r = document.createElement('div'); r.className = 'line';
-      r.innerHTML = `<span class="eq">${d} × ${i + 1} = ${d * (i + 1)}</span><span class="say">${s}</span>`;
-      box.appendChild(r);
-    });
-  });
-  let singTimer = null;
-  document.querySelectorAll('[data-sing]').forEach(b => b.onclick = () => sing(b.dataset.sing));
-  function sing(d){
-    clearInterval(singTimer);
-    document.querySelectorAll('.line.now').forEach(l => l.classList.remove('now'));
-    const lines = [...$('dan' + d).querySelectorAll('.line')];
-    let i = 0; lines[0].classList.add('now');
-    singTimer = setInterval(() => {
-      lines[i].classList.remove('now'); i++;
-      if(i >= lines.length){ clearInterval(singTimer); return; }
-      lines[i].classList.add('now');
-    }, 1700);
-  }
 
   // ---------- 땅따먹기 그림 ----------
   const NS = 'http://www.w3.org/2000/svg', INK = '#27221e', FONT = '"Noto Sans KR", sans-serif';
@@ -638,6 +620,32 @@ a.btn.b{color:#fff}
   // 내 컴퓨터 파일이나 Vercel 주소에서는 슬라이드 안에 띄우고, 그 밖(Claude 미리보기 등)에서는 새 탭으로 열어요
   const CAN_EMBED = location.protocol === 'file:' || location.hostname.endsWith('vercel.app') || location.hostname === 'localhost';
   let botOpen = false;
+
+  // ---------- 2번 장: 주니토니 구구단송 7단·8단 ----------
+  const VIDEOS = {7: '0pWgBB23-Jg', 8: 'gQFzrS4nMnk'};
+  [7, 8].forEach(d => {
+    const box = $('vf' + d), id = VIDEOS[d];
+    if(CAN_EMBED){
+      const f = document.createElement('iframe');
+      f.id = 'yt' + d; f.title = d + '단 구구단송';
+      f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      f.src = `https://www.youtube-nocookie.com/embed/${id}?enablejsapi=1&rel=0&playsinline=1&modestbranding=1`;
+      box.appendChild(f);
+    } else {
+      // Claude 미리보기에서는 영상을 넣을 수 없어서 유튜브로 연결
+      const a = document.createElement('a'); a.className = 'btn y'; a.target = '_blank'; a.rel = 'noopener';
+      a.href = 'https://www.youtube.com/watch?v=' + id; a.textContent = '▶ 유튜브에서 보기';
+      box.appendChild(a);
+    }
+  });
+  const ytCmd = (d, func) => { const f = $('yt' + d); if(f) try{ f.contentWindow.postMessage(JSON.stringify({event: 'command', func, args: []}), '*'); }catch(_){} };
+  function playVid(d){
+    const other = d === 7 ? 8 : 7;
+    ytCmd(other, 'pauseVideo');
+    $('songs').className = 'song v one one-' + d;
+    if(CAN_EMBED) ytCmd(d, 'playVideo'); else window.open('https://www.youtube.com/watch?v=' + VIDEOS[d], '_blank', 'noopener');
+  }
+  function pauseVids(){ ytCmd(7, 'pauseVideo'); ytCmd(8, 'pauseVideo'); }
   function focusBot(){ const f = $('botFrame'); f.focus(); try{ f.contentWindow.focus(); }catch(_){} }
   function openBot(){
     if(!CAN_EMBED){ window.open('https://gugubot-for-waseok.vercel.app/', '_blank', 'noopener'); return; }
@@ -663,7 +671,7 @@ a.btn.b{color:#fff}
   const ansShown = i => !document.querySelectorAll('.prob .a')[i].classList.contains('q');
   const STEPS = [
     [{t: '🤖 구구봇 열기', run: openBot}, {t: '💡 생각 확인하기', run: () => reveal('a1'), done: () => isShown('a1')}],
-    [{t: '🎵 7단 따라 부르기', run: () => sing(7)}, {t: '🎵 8단 따라 부르기', run: () => sing(8)}],
+    [{t: '▶ 7단 영상 재생', run: () => playVid(7)}, {t: '▶ 8단 영상 재생', run: () => playVid(8)}],
     [{t: '🔤 곱셈구구 보이기', run: () => $('cho').classList.add('open'), done: () => $('cho').classList.contains('open')}],
     [],
     [],
