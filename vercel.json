@@ -3,9 +3,16 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Permissions-Policy", "value": "microphone=(self)" },
-        { "key": "Cache-Control", "value": "no-cache" }
+        {
+          "key": "Permissions-Policy",
+          "value": "microphone=(self)"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
       ]
     }
-  ]
+  ],
+  "cleanUrls": true
 }

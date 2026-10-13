@@ -1,0 +1,707 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>곱셈구구 놀이 수업</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>
+/* 레이아웃: 어두운 작업 화면 위에 슬라이드 카드가 가로로 이어지고(arqe), 각 카드는 색 모눈 테두리 + 검은 선 흰 종이(Canva 레퍼런스). 아래는 타임라인 막대 */
+:root{
+  --shell:#121214; --shell-2:#1c1c20; --shell-3:#2a2a30; --shell-text:#ececf0; --shell-muted:#8c8c96;
+  --ink:#27221e; --muted:#6f6760; --paper:#ffffff;
+  --blue:#6d97ee; --yellow:#f6c218; --coral:#ef5f3c; --peach:#f6c09e;
+  --blue-soft:#e3ebfd; --yellow-soft:#fff3c4; --coral-soft:#fde0d6; --peach-soft:#fdeadd; --green:#1f9d57; --green-soft:#dcf3e5;
+  --f:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--shell);color:var(--ink);font-family:var(--f);overflow:hidden;word-break:keep-all}
+button{font-family:var(--f);cursor:pointer;color:var(--ink)}
+button:focus-visible,a:focus-visible{outline:4px solid var(--blue);outline-offset:3px}
+
+/* ---------- 무대 ---------- */
+.viewport{position:fixed;inset:0 0 84px 0;overflow:hidden}
+.stage{position:absolute;left:50%;top:50%;width:0;height:0;transition:transform .6s cubic-bezier(.65,0,.35,1)}
+.slide{position:absolute;left:-640px;top:-360px;width:1280px;height:720px;padding:30px;border-radius:10px;
+  background-color:var(--fc);
+  background-image:linear-gradient(rgba(0,0,0,.13) 2px,transparent 2px),linear-gradient(90deg,rgba(0,0,0,.13) 2px,transparent 2px);
+  background-size:22px 22px;background-position:-1px -1px;
+  transition:transform .6s cubic-bezier(.65,0,.35,1),opacity .6s,filter .6s;cursor:pointer}
+.slide.active{cursor:default}
+.slide:not(.active) .paper{pointer-events:none}
+body:not(.overview) .slide:not(.active){opacity:.38;filter:saturate(.6)}
+.f-blue{--fc:var(--blue)}.f-yellow{--fc:var(--yellow)}.f-coral{--fc:var(--coral)}.f-peach{--fc:var(--peach)}
+.paper{position:relative;height:100%;background:var(--paper);border:4px solid var(--ink);border-radius:30px;padding:40px 52px 32px;display:flex;flex-direction:column;gap:20px}
+.tag{position:absolute;top:-19px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:20px;font-weight:700;padding:6px 22px;border-radius:999px;white-space:nowrap}
+h1{margin:0;font-size:50px;font-weight:900;line-height:1.2;text-align:center;letter-spacing:-.02em;text-wrap:balance}
+.mk{display:inline-block;padding:0 12px;border:3px solid var(--ink);line-height:1.15}
+.mk.y{background:var(--yellow)}.mk.b{background:var(--blue);color:#fff}.mk.c{background:var(--coral);color:#fff}.mk.p{background:var(--peach)}
+.box{border:3px solid var(--ink);border-radius:18px;background:var(--paper)}
+.box.y{background:var(--yellow-soft)}.box.b{background:var(--blue-soft)}.box.c{background:var(--coral-soft)}.box.p{background:var(--peach-soft)}
+.row{display:flex;gap:26px;min-height:0}
+.big{font-size:32px;line-height:1.5;font-weight:700}
+.btn{border:3px solid var(--ink);border-radius:12px;background:var(--paper);padding:9px 20px;font-size:24px;font-weight:700;box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--ink)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.y{background:var(--yellow)}.btn.b{background:var(--blue);color:#fff}.btn.c{background:var(--coral);color:#fff}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px;color:var(--ink)}
+a.btn.b{color:#fff}
+.hidden-answer{visibility:hidden}
+.shown{visibility:visible;animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.hint{font-size:22px;color:var(--muted);text-align:center}
+.deco{position:absolute;pointer-events:none}
+
+/* ---------- 타임라인 막대 (arqe) ---------- */
+.bar{position:fixed;left:12px;right:12px;bottom:12px;height:62px;border-radius:14px;background:var(--shell-2);display:flex;align-items:center;gap:12px;padding:0 12px;color:var(--shell-text)}
+.bar button{background:var(--shell-3);color:var(--shell-text);border:none;border-radius:10px;height:40px;min-width:40px;padding:0 12px;font-size:17px;font-weight:700}
+.bar button:hover{background:#3a3a42}
+.bar .now{font-size:15px;color:var(--shell-muted);white-space:nowrap;min-width:150px}
+.bar .now b{color:var(--shell-text);display:block;font-size:17px}
+.track{flex:1;display:flex;gap:4px;align-items:center;height:40px;min-width:0}
+.track button{flex:1;min-width:0;height:28px;padding:0;border-radius:6px;background:var(--shell-3);font-size:13px;color:var(--shell-muted);position:relative}
+.track button.done{background:#4a3a2e;color:#d9b9a2}
+.track button.on{background:var(--coral);color:#fff}
+.count{font-variant-numeric:tabular-nums;font-size:17px;font-weight:700;min-width:62px;text-align:center}
+.nexthint{font-size:14px;color:var(--peach);white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:720px){.bar .now,.track,.nexthint{display:none}.bar{justify-content:center}}
+/* 구구봇 화면 (슬라이드 위에 열림) */
+.botlayer{position:fixed;inset:0;z-index:20;background:var(--shell);display:flex;flex-direction:column}
+.botbar{height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;color:var(--shell-text);font-size:16px;font-weight:700}
+.botbar .keys{flex:1;color:var(--peach);font-weight:500}
+.botbar button{background:var(--shell-3);color:var(--shell-text);border:none;border-radius:10px;height:34px;padding:0 14px;font-weight:700}
+.botlayer iframe{flex:1;border:0;background:#e7f0f5}
+.blackout{position:fixed;inset:0;background:#000;z-index:40}
+
+/* ---------- 슬라이드별 ---------- */
+/* 1 */
+.vs{flex:1.05;display:flex;align-items:center;justify-content:center;gap:24px}
+.vs .who{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:28px;font-weight:700}
+.vs .face{font-size:140px;line-height:1.15}
+.vs .vstext{font-size:70px;font-weight:900}
+.question{flex:1;padding:32px 34px;display:flex;flex-direction:column;gap:20px;justify-content:center}
+.answer-box{background:var(--green-soft);border:3px dashed var(--green);border-radius:16px;padding:16px 20px;font-size:28px;font-weight:700;color:#11683a}
+/* 2 */
+.song{display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:1;min-height:0}
+.dan{padding:14px 20px;display:flex;flex-direction:column;gap:1px}
+.dan h2{margin:0 0 6px;font-size:30px;font-weight:900;display:flex;align-items:center;justify-content:space-between}
+.dan .btn{font-size:18px;padding:4px 12px}
+.line{display:flex;align-items:baseline;gap:18px;padding:2px 14px;border-radius:10px;transition:background .2s,transform .2s}
+.line .eq{font-size:29px;font-weight:700;width:180px;font-variant-numeric:tabular-nums}
+.line .say{font-size:20px;color:var(--muted)}
+.line.now{background:var(--yellow);transform:scale(1.04)}
+.line.now .say{color:var(--ink)}
+/* 3 */
+.goal{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px}
+.goal .sentence{font-size:56px;font-weight:900;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.cho{display:inline-flex;gap:8px;cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:60px}
+.tile{position:relative;width:92px;height:104px;display:inline-block;perspective:600px}
+.tile span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border:4px solid var(--ink);backface-visibility:hidden;transition:transform .6s}
+.tile .front{background:var(--blue);color:#fff}
+.tile .back{background:var(--yellow);transform:rotateY(180deg)}
+.cho.open .tile .front{transform:rotateY(180deg)}
+.cho.open .tile .back{transform:rotateY(360deg)}
+.cho.open .tile:nth-child(2) span{transition-delay:.15s}.cho.open .tile:nth-child(3) span{transition-delay:.3s}.cho.open .tile:nth-child(4) span{transition-delay:.45s}
+/* 4 */
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:34px;flex:1}
+.act{padding:30px 34px;display:flex;flex-direction:column;gap:14px}
+.act .emo{font-size:76px;line-height:1}
+.act h2{margin:0;font-size:44px;font-weight:900}
+.act p{margin:0;font-size:26px;color:var(--muted);line-height:1.5;font-weight:500}
+/* 5~7 : 번호 동그라미가 선으로 이어진 단계 (Canva 패턴 슬라이드) */
+.chain{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px;position:relative;min-width:0}
+.chain::before{content:"";position:absolute;left:27px;top:40px;bottom:40px;width:4px;background:var(--ink)}
+.link{display:flex;align-items:center;gap:20px;position:relative}
+.link .n{flex:none;width:58px;height:58px;border-radius:50%;border:4px solid var(--ink);background:var(--peach);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900}
+.link:nth-child(2) .n{background:var(--coral);color:#fff}.link:nth-child(3) .n{background:var(--yellow)}
+.link .t{flex:1;padding:14px 20px;font-size:26px;line-height:1.45;font-weight:500}
+.link .t b{font-weight:900}
+.board{flex:none;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.board svg{display:block}
+.cell{fill:#fff;stroke:#b9b2ab;stroke-width:1.5}
+.mine{fill:var(--peach)}.yours{fill:var(--blue)}
+.paint{fill:var(--peach);opacity:0;transition:opacity .25s}
+.paint.on{opacity:1}
+.cnt{font-family:var(--f);font-weight:900;font-size:22px;fill:var(--ink);opacity:0;transition:opacity .2s}
+.cnt.on{opacity:1}
+.dice{display:flex;gap:20px;align-items:center;justify-content:center}
+.die{width:110px;height:110px;background:#fff;border:4px solid var(--ink);border-radius:20px;position:relative}
+.die i{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--ink)}
+.die.red i{background:var(--coral)}
+.die-label{font-size:24px;font-weight:700;text-align:center;margin-top:10px}
+.legend{display:flex;gap:18px;font-size:20px;font-weight:700}
+.legend b{display:inline-block;width:20px;height:20px;vertical-align:-3px;margin-right:6px;border:2px solid var(--ink)}
+/* 8 */
+.hearts{display:flex;gap:22px;justify-content:center}
+.heart{font-size:84px;line-height:1;border:none;background:none;padding:0;transition:transform .2s,filter .3s}
+.heart.broken{filter:grayscale(1);opacity:.35;transform:scale(.85) rotate(-12deg)}
+.probs{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.prob{padding:26px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:66px;font-weight:900;background:var(--blue-soft);border:3px solid var(--ink);border-radius:18px}
+.prob .a{font-size:42px;color:var(--green);min-height:56px}
+.prob .a.q{color:#a9a29b}
+.rules{display:flex;flex-direction:column;gap:10px;font-size:26px;font-weight:500}
+.rules b{font-weight:900}
+/* 9 */
+.note{flex:1;padding:26px 36px;display:flex;flex-direction:column;gap:14px;background:repeating-linear-gradient(#fff 0 62px,#e8e1da 62px 64px)}
+.note .ln{font-size:32px;line-height:1.55;font-weight:700}
+.blank{display:inline-block;min-width:80px;border-bottom:4px solid var(--coral);margin:0 6px}
+.timer{font-size:54px;font-weight:900;font-variant-numeric:tabular-nums}
+/* 10 */
+.next{flex:1;display:grid;grid-template-columns:1.1fr 1fr;gap:30px;align-items:center}
+.chairs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-size:60px;text-align:center;padding:22px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="bot" viewBox="0 0 200 230">
+    <line x1="100" y1="30" x2="100" y2="10" stroke="#27221e" stroke-width="5"/>
+    <circle cx="100" cy="9" r="8" fill="#ef5f3c" stroke="#27221e" stroke-width="3"/>
+    <rect x="22" y="56" width="16" height="40" rx="7" fill="#6d97ee" stroke="#27221e" stroke-width="3"/>
+    <rect x="162" y="56" width="16" height="40" rx="7" fill="#6d97ee" stroke="#27221e" stroke-width="3"/>
+    <rect x="34" y="30" width="132" height="96" rx="24" fill="#e3ebfd" stroke="#27221e" stroke-width="4"/>
+    <rect x="48" y="44" width="104" height="68" rx="14" fill="#27221e"/>
+    <circle cx="78" cy="72" r="10" fill="#f6c218"/>
+    <circle cx="122" cy="72" r="10" fill="#f6c218"/>
+    <rect x="78" y="94" width="44" height="6" rx="3" fill="#f6c09e"/>
+    <rect x="88" y="126" width="24" height="14" fill="#27221e"/>
+    <rect x="52" y="138" width="96" height="80" rx="18" fill="#e3ebfd" stroke="#27221e" stroke-width="4"/>
+    <rect x="66" y="152" width="68" height="32" rx="6" fill="#27221e"/>
+    <text x="100" y="175" text-anchor="middle" font-size="18" fill="#f6c218" font-family="monospace" font-weight="700">9×9</text>
+    <circle cx="80" cy="200" r="6" fill="#ef5f3c"/><circle cx="100" cy="200" r="6" fill="#f6c218"/><circle cx="120" cy="200" r="6" fill="#6d97ee"/>
+  </symbol>
+  <!-- Canva 레퍼런스의 도형 장식: 축, 살구색 네모, 주황 동그라미, 노란 화살표 -->
+  <symbol id="deco" viewBox="0 0 220 200">
+    <polyline points="10,10 10,190 170,190" fill="none" stroke="#27221e" stroke-width="3"/>
+    <circle cx="10" cy="10" r="6" fill="#ef5f3c" stroke="#27221e" stroke-width="2"/>
+    <circle cx="10" cy="190" r="6" fill="#ef5f3c" stroke="#27221e" stroke-width="2"/>
+    <circle cx="170" cy="190" r="6" fill="#ef5f3c" stroke="#27221e" stroke-width="2"/>
+    <circle cx="160" cy="55" r="48" fill="#ef5f3c" stroke="#27221e" stroke-width="3"/>
+    <rect x="40" y="55" width="120" height="115" fill="#f6c09e" stroke="#27221e" stroke-width="3"/>
+    <path d="M160 55 A48 48 0 0 0 112 55 L112 103 L160 103 Z" fill="#f6c09e" stroke="#27221e" stroke-width="3"/>
+    <path d="M62 22 h16 v16 h10 l-18 20 l-18 -20 h10z" fill="#f6c218" stroke="#27221e" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="90" y="102" width="22" height="22" fill="none" stroke="#27221e" stroke-width="2.5"/>
+    <path d="M101 107 v12 M95 113 h12" stroke="#27221e" stroke-width="2.5"/>
+  </symbol>
+</svg>
+
+<div class="viewport" id="viewport"><div class="stage" id="stage">
+
+  <!-- 1. 곱셈구구 로봇과 경쟁하기 -->
+  <section class="slide f-blue" data-title="로봇과 경쟁하기"><div class="paper">
+    <span class="tag">생각 열기</span>
+    <h1>선생님 <span class="mk y">VS</span> 곱셈구구 로봇!</h1>
+    <div class="row" style="flex:1">
+      <div class="vs">
+        <div class="who"><div class="face">👩‍🏫</div>선생님</div>
+        <div class="vstext">VS</div>
+        <div class="who"><svg width="180" height="207" aria-label="곱셈구구 로봇"><use href="#bot"/></svg>구구봇</div>
+      </div>
+      <div class="box y question">
+        <div class="big">🤔 선생님은 어떻게 곱셈구구 로봇을 이길 수 있었을까요?</div>
+        <div class="answer-box hidden-answer" id="a1">🧠 곱셈구구를 머릿속에 모두 외우고 있기 때문이에요!</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <button class="btn c" data-reveal="a1" type="button">생각 확인하기</button>
+          <button class="btn" type="button" data-bot>🤖 구구봇 열기</button>
+        </div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 2. 곱셈구구 노래 -->
+  <section class="slide f-yellow" data-title="곱셈구구 노래"><div class="paper">
+    <span class="tag">함께 불러요</span>
+    <h1>🎵 어려웠던 <span class="mk c">7단</span> <span class="mk b">8단</span> 노래 불러요</h1>
+    <div class="song">
+      <div class="box c dan" id="dan7"><h2>7단 <button class="btn" type="button" data-sing="7">▶ 따라 부르기</button></h2></div>
+      <div class="box b dan" id="dan8"><h2>8단 <button class="btn" type="button" data-sing="8">▶ 따라 부르기</button></h2></div>
+    </div>
+  </div></section>
+
+  <!-- 3. 학습 문제 -->
+  <section class="slide f-coral" data-title="학습 문제"><div class="paper">
+    <span class="tag">학습 문제</span>
+    <svg class="deco" style="left:26px;bottom:24px" width="170" height="155"><use href="#deco"/></svg>
+    <div class="goal">
+      <div class="sentence">
+        <span>놀이를 통해</span>
+        <button class="cho" id="cho" type="button" aria-label="눌러서 정답 보기">
+          <span class="tile"><span class="front">ㄱ</span><span class="back">곱</span></span>
+          <span class="tile"><span class="front">ㅅ</span><span class="back">셈</span></span>
+          <span class="tile"><span class="front">ㄱ</span><span class="back">구</span></span>
+          <span class="tile"><span class="front">ㄱ</span><span class="back">구</span></span>
+        </button>
+        <span>를</span>
+      </div>
+      <div class="sentence"><span class="mk y">익혀 봅시다.</span></div>
+      <div class="hint">👆 파란 초성 카드를 누르면 정답이 나와요</div>
+    </div>
+  </div></section>
+
+  <!-- 4. 학습 활동 안내 -->
+  <section class="slide f-peach" data-title="학습 활동"><div class="paper">
+    <span class="tag">오늘의 활동</span>
+    <h1>오늘은 이렇게 <span class="mk y">놀며 배워요!</span></h1>
+    <div class="acts">
+      <div class="box p act">
+        <span class="mk c" style="align-self:flex-start;font-size:22px;font-weight:900">활동 1</span>
+        <div class="emo">🎲🖍️</div>
+        <h2>곱셈 땅따먹기</h2>
+        <p>짝과 주사위를 굴려서<br>곱셈으로 내 땅을 넓혀요.</p>
+      </div>
+      <div class="box b act">
+        <span class="mk b" style="align-self:flex-start;font-size:22px;font-weight:900">활동 2</span>
+        <div class="emo">🤖❤️</div>
+        <h2>곱셈구구 로봇을 이겨라</h2>
+        <p>우리 반 모두 힘을 모아<br>로봇보다 빠르게 답해요.</p>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 5. 땅따먹기 규칙 1 -->
+  <section class="slide f-yellow" data-title="땅따먹기 ① 준비"><div class="paper">
+    <span class="tag">곱셈 땅따먹기 ① 준비해요</span>
+    <h1>짝과 함께 <span class="mk p">준비해요</span></h1>
+    <div class="row" style="flex:1">
+      <div class="chain">
+        <div class="link"><span class="n">1</span><div class="box t">📄 놀이판, 🎲 주사위, 🖍️ 색연필 2가지 색을 준비해요.</div></div>
+        <div class="link"><span class="n">2</span><div class="box t">✊ <b>가위바위보</b>로 누가 먼저 할지 정해요.</div></div>
+        <div class="link"><span class="n">3</span><div class="box t">⭐ 놀이판 <b>모서리</b>에 나와 짝의 <b>출발점</b>을 정해요.</div></div>
+      </div>
+      <div class="box board">
+        <svg id="board1" width="460" height="350" aria-label="놀이판과 출발점"></svg>
+        <div class="legend"><span><b style="background:var(--peach)"></b>나의 출발점</span><span><b style="background:var(--blue)"></b>짝의 출발점</span></div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 6. 땅따먹기 규칙 2 -->
+  <section class="slide f-yellow" data-title="땅따먹기 ② 색칠"><div class="paper">
+    <span class="tag">곱셈 땅따먹기 ② 땅을 칠해요</span>
+    <h1>주사위가 <span class="mk y">3</span> 과 <span class="mk c">2</span> 가 나왔어요!</h1>
+    <div class="row" style="flex:1;align-items:center">
+      <div style="flex:1;display:flex;flex-direction:column;gap:22px;align-items:center">
+        <div class="dice">
+          <div><div class="die" id="dieA"></div><div class="die-label">가로 3칸</div></div>
+          <div style="font-size:56px;font-weight:900">×</div>
+          <div><div class="die red" id="dieB"></div><div class="die-label">세로 2칸</div></div>
+        </div>
+        <div class="box y" style="padding:16px 22px;font-size:26px;line-height:1.45;font-weight:500">🖍️ 출발점에서 <b style="font-weight:900">가로로 3칸, 세로로 2칸</b>을<br>내 색깔로 칠해요.</div>
+        <button class="btn c" type="button" id="paintBtn">🖍️ 색칠해 보기</button>
+      </div>
+      <div class="box board">
+        <svg id="board2" width="470" height="380" aria-label="3칸씩 2줄 색칠하기"></svg>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 7. 땅따먹기 규칙 3 -->
+  <section class="slide f-yellow" data-title="땅따먹기 ③ 곱셈식"><div class="paper">
+    <span class="tag">곱셈 땅따먹기 ③ 곱셈식을 써요</span>
+    <h1>내 땅 안에 <span class="mk p">곱셈식</span>을 써요</h1>
+    <div class="row" style="flex:1">
+      <div class="chain">
+        <div class="link"><span class="n">1</span><div class="box t">✏️ 3칸씩 2줄이니까 <b>3 × 2 = 6</b>을 땅 안에 써요.</div></div>
+        <div class="link"><span class="n">2</span><div class="box t">🧩 다음 땅은 내 땅의 <b>꼭짓점에 붙여서</b> 칠해요. 짝의 땅과 겹치면 안 돼요.</div></div>
+        <div class="link"><span class="n">3</span><div class="box t">🏆 더 칠할 곳이 없으면 끝! <b>땅이 더 넓은 사람</b>이 이겨요.</div></div>
+      </div>
+      <div class="box board">
+        <svg id="board3" width="470" height="350" aria-label="곱셈식을 쓴 땅"></svg>
+        <button class="btn" type="button" id="countBtn">🔢 칸 수 세어 보기</button>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 8. 곱셈구구 로봇을 이겨라 -->
+  <section class="slide f-blue" data-title="로봇을 이겨라"><div class="paper">
+    <span class="tag">활동 2</span>
+    <h1>⚡ 곱셈구구 로봇을 <span class="mk b">이겨라!</span></h1>
+    <div class="row" style="align-items:center">
+      <div class="rules" style="flex:1">
+        <div>🏃 로봇보다 <b>빠르고 정확하게</b> 대답해요.</div>
+        <div>💔 틀리면 하트가 하나씩 깎여요.</div>
+        <div>😱 하트 3개가 모두 깎이면 우리 반 패배!</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div class="hearts">
+          <button class="heart" type="button" aria-label="하트 1">❤️</button>
+          <button class="heart" type="button" aria-label="하트 2">❤️</button>
+          <button class="heart" type="button" aria-label="하트 3">❤️</button>
+        </div>
+        <div class="hint" style="font-size:18px">하트를 누르면 깎여요 · 다시 누르면 돌아와요</div>
+      </div>
+    </div>
+    <div class="probs">
+      <button class="prob" type="button"><span>8 × 7</span><span class="a q" data-ans="56">?</span></button>
+      <button class="prob" type="button"><span>9 × 7</span><span class="a q" data-ans="63">?</span></button>
+      <button class="prob" type="button"><span>3 × 8</span><span class="a q" data-ans="24">?</span></button>
+    </div>
+    <div style="display:flex;justify-content:center"><button class="btn b" type="button" data-bot>🤖 구구봇과 대결하기</button></div>
+  </div></section>
+
+  <!-- 9. 배움 노트 -->
+  <section class="slide f-peach" data-title="배움 노트"><div class="paper">
+    <span class="tag">정리해요</span>
+    <h1>📒 <span class="mk y">배움 노트</span>를 정리해요</h1>
+    <div class="row" style="flex:1">
+      <div class="box note">
+        <div class="ln">✏️ 오늘 <span class="mk p">틀렸거나 헷갈린 곱셈구구</span>를 적어요.</div>
+        <div class="ln" style="color:var(--muted)">예) 7 × 8 = 56 &nbsp;<span style="font-size:24px">← 54라고 헷갈렸어요</span></div>
+        <div class="ln"><span class="blank"></span> × <span class="blank"></span> = <span class="blank" style="min-width:100px"></span></div>
+        <div class="ln"><span class="blank"></span> × <span class="blank"></span> = <span class="blank" style="min-width:100px"></span></div>
+        <div class="ln"><span class="blank"></span> × <span class="blank"></span> = <span class="blank" style="min-width:100px"></span></div>
+      </div>
+      <div class="box y" style="flex:none;width:280px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+        <div style="font-size:66px">⏰</div>
+        <div class="timer" id="timeLeft">3:00</div>
+        <button class="btn c" type="button" id="timerBtn">시작</button>
+        <button class="btn" type="button" id="timerReset" style="font-size:18px">다시</button>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 10. 다음 시간 예고 -->
+  <section class="slide f-coral" data-title="다음 시간"><div class="paper">
+    <span class="tag">다음 시간에는</span>
+    <h1>🔍 교실 속 물건으로 <span class="mk y">곱셈 질문</span>을 만들어요</h1>
+    <div class="next">
+      <div class="box p" style="padding:28px 32px;display:flex;flex-direction:column;gap:16px">
+        <div class="big">우리 교실에서 <b>같은 수만큼 묶여 있는 물건</b>을 찾아 구구봇에게 문제를 내 봐요!</div>
+        <div class="big" style="color:var(--muted);font-weight:500">예) 의자가 4개씩 3줄 있으면<br>모두 몇 개일까?</div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <span style="font-size:44px;font-weight:900">4 × 3 = <span class="hidden-answer" id="a10" style="color:var(--green)">12</span></span>
+          <button class="btn c" type="button" data-reveal="a10">정답 보기</button>
+        </div>
+      </div>
+      <div class="box b chairs" aria-label="의자 4개씩 3줄">
+        <span>🪑</span><span>🪑</span><span>🪑</span><span>🪑</span>
+        <span>🪑</span><span>🪑</span><span>🪑</span><span>🪑</span>
+        <span>🪑</span><span>🪑</span><span>🪑</span><span>🪑</span>
+      </div>
+    </div>
+  </div></section>
+
+</div></div>
+
+<div class="botlayer" id="botLayer" hidden>
+  <div class="botbar"><span>🤖 구구봇</span><span class="keys">프레젠터 ▶ 다음 = 말하기 시작 &nbsp;·&nbsp; ◀ 이전 = 슬라이드로 돌아가기</span><button type="button" id="botClose">✕ 닫기</button></div>
+  <iframe id="botFrame" title="구구봇" allow="microphone; autoplay; fullscreen"></iframe>
+</div>
+<div class="blackout" id="blackout" hidden></div>
+
+<div class="bar" role="toolbar" aria-label="슬라이드 넘기기">
+  <button type="button" id="prev" aria-label="이전">◀</button>
+  <button type="button" id="next" aria-label="다음">▶</button>
+  <div class="now"><span id="nowNum">SCENE 01</span><b id="nowTitle"></b></div>
+  <div class="track" id="track"></div>
+  <span class="count" id="count">1 / 10</span>
+  <span class="nexthint" id="nextHint"></span>
+  <button type="button" id="ov" title="전체 보기 (G)">▦ 전체 보기</button>
+  <button type="button" id="fs" title="전체 화면 (F)">⛶</button>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const slides = [...document.querySelectorAll('.slide')];
+  const W = 1280, H = 720, GAP = 70;
+  let cur = 0, overview = false;
+  const stepAt = slides.map(() => 0);   // 장마다 몇 번째 동작까지 했는지
+
+  // ---------- 배치: 보통은 가로로 이어진 카드, 전체 보기는 5×2 격자 ----------
+  function layout(){
+    const vw = innerWidth, vh = innerHeight - 84;
+    if(!overview){
+      const s = Math.min(vw * 0.86 / W, vh * 0.92 / H);
+      $('stage').style.transform = `scale(${s})`;
+      slides.forEach((sl, i) => {
+        const dx = (i - cur) * (W + GAP);
+        sl.style.transform = `translate(${dx}px,0) scale(${i === cur ? 1 : 0.9})`;
+      });
+    } else {
+      const cols = 5, rows = 2, g = 90;
+      const tw = cols * W + (cols - 1) * g, th = rows * H + (rows - 1) * g;
+      const s = Math.min(vw * 0.94 / tw, vh * 0.9 / th);
+      $('stage').style.transform = `scale(${s})`;
+      slides.forEach((sl, i) => {
+        const c = i % cols, r = Math.floor(i / cols);
+        const x = (c - (cols - 1) / 2) * (W + g), y = (r - (rows - 1) / 2) * (H + g);
+        sl.style.transform = `translate(${x}px,${y}px) scale(1)`;
+      });
+    }
+  }
+  addEventListener('resize', layout);
+
+  // ---------- 타임라인 ----------
+  slides.forEach((s, i) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.textContent = i + 1; b.title = (i + 1) + '. ' + s.dataset.title;
+    b.onclick = () => go(i); $('track').appendChild(b);
+  });
+  function go(n){
+    cur = Math.max(0, Math.min(slides.length - 1, n));
+    if(overview){ overview = false; document.body.classList.remove('overview'); }
+    slides.forEach((s, i) => s.classList.toggle('active', i === cur));
+    [...$('track').children].forEach((b, i) => { b.classList.toggle('on', i === cur); b.classList.toggle('done', i < cur); });
+    $('count').textContent = (cur + 1) + ' / ' + slides.length;
+    $('nowNum').textContent = 'SCENE ' + String(cur + 1).padStart(2, '0');
+    $('nowTitle').textContent = slides[cur].dataset.title;
+    layout(); updateHint();
+    try{ history.replaceState(null, '', '#s' + (cur + 1)); }catch(_){}
+  }
+  function toggleOverview(){
+    overview = !overview;
+    document.body.classList.toggle('overview', overview);
+    slides.forEach(s => s.classList.toggle('active', !overview && s === slides[cur]));
+    $('ov').textContent = overview ? '✕ 닫기' : '▦ 전체 보기';
+    layout();
+  }
+  // 옆 카드나 전체 보기의 카드를 누르면 그 장으로 이동
+  slides.forEach((s, i) => s.addEventListener('click', () => { if(overview || i !== cur) go(i); }));
+  $('prev').onclick = () => prev();
+  $('next').onclick = () => next();
+  $('ov').onclick = toggleOverview;
+  const fs = () => {
+    if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+    else document.documentElement.requestFullscreen().catch(()=>{});
+  };
+  $('fs').onclick = fs;
+  // 프레젠터(무선 리모컨)는 보통 PageDown/PageUp, 화살표, F5, B(.) 키를 보내요
+  const NEXT_KEYS = ['ArrowRight','PageDown','ArrowDown',' ','Enter'];
+  const PREV_KEYS = ['ArrowLeft','PageUp','ArrowUp','Backspace'];
+  document.addEventListener('keydown', e => {
+    if(NEXT_KEYS.includes(e.key)){ e.preventDefault(); if(!e.repeat) next(); }
+    else if(PREV_KEYS.includes(e.key)){ e.preventDefault(); if(!e.repeat) prev(); }
+    else if(e.key === 'F5'){ e.preventDefault(); fs(); }
+    else if(['b','B','.','ㅠ'].includes(e.key)) $('blackout').hidden = !$('blackout').hidden;
+    else if(e.key === 'Home') go(0);
+    else if(e.key === 'End') go(slides.length - 1);
+    else if(e.key === 'g' || e.key === 'G' || e.key === 'ㅎ') toggleOverview();
+    else if(e.key === 'Escape'){ if(!$('blackout').hidden) $('blackout').hidden = true; else if(botOpen) closeBot(); else if(overview) toggleOverview(); }
+    else if(e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') fs();
+  });
+  $('blackout').onclick = () => { $('blackout').hidden = true; };
+
+  // ---------- 눌러서 정답 보기 ----------
+  const reveal = id => $(id).classList.add('shown');
+  document.querySelectorAll('[data-reveal]').forEach(b => b.onclick = () => $(b.dataset.reveal).classList.toggle('shown'));
+  $('cho').onclick = () => $('cho').classList.toggle('open');
+
+  // ---------- 노래: 7단, 8단 ----------
+  const SAY = {
+    7: ['칠 일은 칠','칠 이 십사','칠 삼 이십일','칠 사 이십팔','칠 오 삼십오','칠 육 사십이','칠 칠 사십구','칠 팔 오십육','칠 구 육십삼'],
+    8: ['팔 일은 팔','팔 이 십육','팔 삼 이십사','팔 사 삼십이','팔 오 사십','팔 육 사십팔','팔 칠 오십육','팔 팔 육십사','팔 구 칠십이']
+  };
+  [7, 8].forEach(d => {
+    const box = $('dan' + d);
+    SAY[d].forEach((s, i) => {
+      const r = document.createElement('div'); r.className = 'line';
+      r.innerHTML = `<span class="eq">${d} × ${i + 1} = ${d * (i + 1)}</span><span class="say">${s}</span>`;
+      box.appendChild(r);
+    });
+  });
+  let singTimer = null;
+  document.querySelectorAll('[data-sing]').forEach(b => b.onclick = () => sing(b.dataset.sing));
+  function sing(d){
+    clearInterval(singTimer);
+    document.querySelectorAll('.line.now').forEach(l => l.classList.remove('now'));
+    const lines = [...$('dan' + d).querySelectorAll('.line')];
+    let i = 0; lines[0].classList.add('now');
+    singTimer = setInterval(() => {
+      lines[i].classList.remove('now'); i++;
+      if(i >= lines.length){ clearInterval(singTimer); return; }
+      lines[i].classList.add('now');
+    }, 1700);
+  }
+
+  // ---------- 땅따먹기 그림 ----------
+  const NS = 'http://www.w3.org/2000/svg', INK = '#27221e', FONT = '"Noto Sans KR", sans-serif';
+  function el(svg, tag, attrs, text){
+    const e = document.createElementNS(NS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if(text !== undefined) e.textContent = text;
+    svg.appendChild(e); return e;
+  }
+  function grid(svg, cols, rows, size, ox, oy){
+    for(let r = 0; r < rows; r++) for(let c = 0; c < cols; c++)
+      el(svg, 'rect', {x: ox + c * size, y: oy + r * size, width: size, height: size, class: 'cell'});
+    return (c, r) => [ox + c * size, oy + r * size];
+  }
+  // 땅: 칸마다 칠해서 몇 칸인지 보이게, 바깥은 굵은 선
+  function land(svg, at, size, c, r, w, h, cls){
+    for(let j = 0; j < h; j++) for(let i = 0; i < w; i++){
+      const [x, y] = at(c + i, r + j);
+      el(svg, 'rect', {x, y, width: size, height: size, class: cls, stroke: '#8a7f75', 'stroke-width': 1.5});
+    }
+    const [x, y] = at(c, r);
+    el(svg, 'rect', {x, y, width: w * size, height: h * size, fill: 'none', stroke: INK, 'stroke-width': 3.5});
+  }
+  const label = (svg, x, y, t, size, color, extra) => el(svg, 'text', Object.assign({x, y, 'font-size': size, fill: color || INK, 'font-family': FONT, 'font-weight': 900}, extra || {}), t);
+
+  // 5: 출발점
+  (() => {
+    const s = $('board1'), size = 40, at = grid(s, 11, 8, size, 10, 10);
+    land(s, at, size, 0, 0, 1, 1, 'mine');
+    land(s, at, size, 10, 7, 1, 1, 'yours');
+    label(s, 30, 38, '⭐', 22, INK, {'text-anchor': 'middle', 'font-weight': 400});
+    label(s, 430, 318, '⭐', 22, INK, {'text-anchor': 'middle', 'font-weight': 400});
+    label(s, 62, 38, '← 나', 22, '#c2421f');
+    label(s, 340, 318, '짝 →', 22, '#3561c4');
+  })();
+
+  // 6: 3칸씩 2줄 색칠
+  const paintCells = [];
+  (() => {
+    const s = $('board2'), size = 44, ox = 60, oy = 50, at = grid(s, 8, 7, size, ox, oy);
+    for(let r = 0; r < 2; r++) for(let c = 0; c < 3; c++){
+      const [x, y] = at(c, r);
+      paintCells.push(el(s, 'rect', {x, y, width: size, height: size, class: 'paint', stroke: '#8a7f75', 'stroke-width': 1.5}));
+    }
+    el(s, 'rect', {x: ox, y: oy, width: size * 3, height: size * 2, fill: 'none', stroke: INK, 'stroke-width': 4, 'stroke-dasharray': '8 6'});
+    const defs = el(s, 'defs', {});
+    const mk = (id, color) => { const m = el(defs, 'marker', {id, markerWidth: 10, markerHeight: 10, refX: 8, refY: 5, orient: 'auto'}); el(m, 'path', {d: 'M0,0 L10,5 L0,10 z', fill: color}); };
+    mk('arr', '#d9a400'); mk('arr2', '#ef5f3c');
+    el(s, 'line', {x1: ox, y1: oy - 18, x2: ox + size * 3, y2: oy - 18, stroke: '#d9a400', 'stroke-width': 4, 'marker-end': 'url(#arr)'});
+    label(s, ox + size * 1.5, oy - 26, '가로 3칸', 21, '#9a7400', {'text-anchor': 'middle'});
+    el(s, 'line', {x1: ox - 18, y1: oy, x2: ox - 18, y2: oy + size * 2, stroke: '#ef5f3c', 'stroke-width': 4, 'marker-end': 'url(#arr2)'});
+    label(s, ox - 30, oy + size, '세로 2칸', 21, '#c2421f', {'text-anchor': 'middle', transform: `rotate(-90 ${ox - 30} ${oy + size})`});
+    label(s, ox + 14, oy + 30, '⭐', 20, INK, {'font-weight': 400});
+  })();
+  $('paintBtn').onclick = () => paint();
+  function paint(){
+    paintCells.forEach(c => c.classList.remove('on'));
+    paintCells.forEach((c, i) => setTimeout(() => c.classList.add('on'), 300 * (i + 1)));
+  }
+
+  // 7: 곱셈식 쓰기 + 꼭짓점에 붙이기
+  const counts = [];
+  (() => {
+    const s = $('board3'), size = 40, ox = 15, oy = 15, at = grid(s, 11, 8, size, ox, oy);
+    land(s, at, size, 0, 0, 3, 2, 'mine');
+    land(s, at, size, 9, 4, 2, 4, 'yours');
+    label(s, ox + size * 1.5, oy + size + 10, '3×2=6', 28, INK, {'text-anchor': 'middle', id: 'eq32'});
+    label(s, ox + size * 10, oy + size * 6 + 6, '2×4', 24, '#fff', {'text-anchor': 'middle'});
+    label(s, ox + size * 10, oy + size * 6 + 34, '=8', 24, '#fff', {'text-anchor': 'middle'});
+    const [nx, ny] = at(3, 2);
+    el(s, 'rect', {x: nx, y: ny, width: size * 2, height: size * 3, fill: 'none', stroke: '#c2421f', 'stroke-width': 3, 'stroke-dasharray': '7 6'});
+    label(s, nx + size * 0.8, ny + size * 1.7, '?', 28, '#c2421f');
+    el(s, 'circle', {cx: nx, cy: ny, r: 10, fill: '#f6c218', stroke: INK, 'stroke-width': 3});
+    label(s, nx + size * 2.3, ny + 8, '← 꼭짓점에 붙여서!', 20, '#c2421f');
+    let k = 1;
+    for(let r = 0; r < 2; r++) for(let c = 0; c < 3; c++){
+      const [x, y] = at(c, r);
+      counts.push(el(s, 'text', {x: x + size / 2, y: y + size / 2 + 8, 'text-anchor': 'middle', class: 'cnt'}, k++));
+    }
+  })();
+  $('countBtn').onclick = () => countCells();
+  function countCells(){
+    const eq = $('eq32'), showing = counts[0].classList.contains('on');
+    counts.forEach(c => c.classList.remove('on'));
+    if(showing){ eq.style.opacity = 1; return; }
+    eq.style.opacity = 0;
+    counts.forEach((c, i) => setTimeout(() => c.classList.add('on'), 350 * (i + 1)));
+    setTimeout(() => { counts.forEach(c => c.classList.remove('on')); eq.style.opacity = 1; }, 350 * 6 + 1200);
+  }
+
+  // 주사위 눈
+  function pips(die, n){
+    const P = {2:[[28,28],[72,72]],3:[[25,25],[50,50],[75,75]]};
+    P[n].forEach(([x, y]) => { const i = document.createElement('i'); i.style.left = `calc(${x}% - 10px)`; i.style.top = `calc(${y}% - 10px)`; die.appendChild(i); });
+  }
+  pips($('dieA'), 3); pips($('dieB'), 2);
+
+  // ---------- 하트, 문제 카드 ----------
+  document.querySelectorAll('.heart').forEach(h => h.onclick = () => {
+    h.classList.toggle('broken'); h.textContent = h.classList.contains('broken') ? '💔' : '❤️';
+  });
+  document.querySelectorAll('.prob').forEach(p => p.onclick = () => {
+    const a = p.querySelector('.a');
+    if(a.classList.contains('q')){ a.textContent = a.dataset.ans; a.classList.remove('q'); a.classList.add('shown'); }
+    else { a.textContent = '?'; a.classList.add('q'); a.classList.remove('shown'); }
+  });
+
+  // ---------- 3분 타이머 ----------
+  let left = 180, tick = null;
+  const show = () => { $('timeLeft').textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0'); };
+  $('timerBtn').onclick = () => {
+    if(tick){ clearInterval(tick); tick = null; $('timerBtn').textContent = '계속'; return; }
+    $('timerBtn').textContent = '멈춤';
+    tick = setInterval(() => {
+      left--; show();
+      if(left <= 0){ clearInterval(tick); tick = null; $('timeLeft').textContent = '끝! 🎉'; $('timerBtn').textContent = '시작'; left = 180; }
+    }, 1000);
+  };
+  $('timerReset').onclick = () => { clearInterval(tick); tick = null; left = 180; show(); $('timerBtn').textContent = '시작'; };
+
+  // ---------- 구구봇: 슬라이드 위에서 열기 ----------
+  const ON_GUGUBOT = location.hostname === 'gugubot-for-waseok.vercel.app';
+  const BOT_URL = ON_GUGUBOT ? '/' : 'https://gugubot-for-waseok.vercel.app/';
+  // 내 컴퓨터 파일이나 Vercel 주소에서는 슬라이드 안에 띄우고, 그 밖(Claude 미리보기 등)에서는 새 탭으로 열어요
+  const CAN_EMBED = location.protocol === 'file:' || location.hostname.endsWith('vercel.app') || location.hostname === 'localhost';
+  let botOpen = false;
+  function focusBot(){ const f = $('botFrame'); f.focus(); try{ f.contentWindow.focus(); }catch(_){} }
+  function openBot(){
+    if(!CAN_EMBED){ window.open('https://gugubot-for-waseok.vercel.app/', '_blank', 'noopener'); return; }
+    const f = $('botFrame');
+    $('botLayer').hidden = false; botOpen = true;
+    if(!f.getAttribute('src')){ f.addEventListener('load', focusBot, {once: true}); f.src = BOT_URL; }
+    else focusBot();
+    updateHint();
+  }
+  function closeBot(){
+    $('botLayer').hidden = true; botOpen = false;
+    window.focus(); $('next').focus(); $('next').blur();
+    updateHint();
+  }
+  document.querySelectorAll('[data-bot]').forEach(b => b.onclick = openBot);
+  $('botClose').onclick = closeBot;
+  // 구구봇 안에서 '이전' 버튼을 누르면 구구봇이 알려 줘요
+  addEventListener('message', e => { if(e.data === 'gugubot:close') closeBot(); });
+
+  // ---------- 프레젠터용 단계: '다음'을 누르면 이 장의 동작부터 차례로 ----------
+  const showAns = i => { const a = document.querySelectorAll('.prob .a')[i]; a.textContent = a.dataset.ans; a.classList.remove('q'); a.classList.add('shown'); };
+  const isShown = id => $(id).classList.contains('shown');
+  const ansShown = i => !document.querySelectorAll('.prob .a')[i].classList.contains('q');
+  const STEPS = [
+    [{t: '🤖 구구봇 열기', run: openBot}, {t: '💡 생각 확인하기', run: () => reveal('a1'), done: () => isShown('a1')}],
+    [{t: '🎵 7단 따라 부르기', run: () => sing(7)}, {t: '🎵 8단 따라 부르기', run: () => sing(8)}],
+    [{t: '🔤 곱셈구구 보이기', run: () => $('cho').classList.add('open'), done: () => $('cho').classList.contains('open')}],
+    [],
+    [],
+    [{t: '🖍️ 색칠하기', run: paint}],
+    [{t: '🔢 칸 수 세기', run: countCells}],
+    [{t: '🤖 구구봇과 대결', run: openBot},
+     {t: '8×7 정답', run: () => showAns(0), done: () => ansShown(0)},
+     {t: '9×7 정답', run: () => showAns(1), done: () => ansShown(1)},
+     {t: '3×8 정답', run: () => showAns(2), done: () => ansShown(2)}],
+    [{t: '⏰ 타이머 시작', run: () => { if(!tick) $('timerBtn').click(); }, done: () => !!tick}],
+    [{t: '✅ 정답 보기', run: () => reveal('a10'), done: () => isShown('a10')}],
+  ];
+  function skipDone(){
+    const st = STEPS[cur];
+    while(stepAt[cur] < st.length && st[stepAt[cur]].done && st[stepAt[cur]].done()) stepAt[cur]++;
+  }
+  function next(){
+    if(botOpen){ try{ $('botFrame').contentWindow.postMessage('gugubot:mic', '*'); }catch(_){} focusBot(); return; }
+    if(overview){ go(cur); return; }
+    skipDone();
+    const st = STEPS[cur];
+    if(stepAt[cur] < st.length){ st[stepAt[cur]++].run(); updateHint(); }
+    else go(cur + 1);
+  }
+  function prev(){
+    if(botOpen){ closeBot(); return; }
+    go(cur - 1);
+  }
+  function updateHint(){
+    if(botOpen){ $('nextHint').textContent = '구구봇 사용 중'; return; }
+    skipDone();
+    const st = STEPS[cur];
+    $('nextHint').textContent = stepAt[cur] < st.length ? '다음 ▶ ' + st[stepAt[cur]].t
+      : (cur < slides.length - 1 ? '다음 ▶ ' + (cur + 2) + '. ' + slides[cur + 1].dataset.title : '마지막 장이에요');
+  }
+  document.addEventListener('click', () => setTimeout(updateHint, 50));
+
+  const m = location.hash.match(/^#s(\d+)$/);
+  go(m ? +m[1] - 1 : 0);
+})();
+</script>
+</body></html>
